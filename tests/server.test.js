@@ -2,10 +2,11 @@ const expect = require("expect")
 const request = require("supertest")
 const {app} = require("./../server/server")
 const {Todo} = require("./../server/models/todo")
+const {ObjectID} = require("mongodb")
 
 const sampleTodos = [
-	{text: "first todo"},
-	{text: "second todo"}
+	{_id: new ObjectID(), text: "first todo"},
+	{_id: new ObjectID(), text: "second todo"}
 ]
 
 beforeEach(done => {
@@ -73,15 +74,13 @@ describe("GET /todos", () => {
 
 describe("GET /todos/:id", () => {
 	it("should return the correct todo with valid id", (done) => {
-		Todo.findOne().then(todo => {
-			request(app)
-				.get(`/todos/${todo.id}`)
-				.expect(200)
-				.expect(res => {
-					expect(res.body.todo).toInclude(todo._doc)
-				})
-				.end(done)
-		})
+		request(app)
+			.get(`/todos/${sampleTodos[0]._id.toHexString()}`)
+			.expect(200)
+			.expect(res => {
+				expect(res.body.todo).toInclude(sampleTodos[0])
+			})
+			.end(done)
 	})
 
 	it("should return 404 if invalid id is sent", (done) => {
@@ -95,6 +94,43 @@ describe("GET /todos/:id", () => {
 		let badId = "6c6332c4be32af8b6d836528"
 		request(app)
 			.get(`/todos/${badId}`)
+			.expect(404)
+			.end(done)
+	})
+})
+
+describe("DELETE /todos/:id", () => {
+	it("should delete a given todo and return it", (done) => {
+		let sampleId = sampleTodos[0]._id.toHexString()
+		request(app)
+			.delete(`/todos/${sampleId}`)
+			.expect(200)
+			.expect(res => {
+				expect(res.body.todo).toInclude(sampleTodos[0])
+			})
+			.end((err, res) => {
+				if (err) {
+					return done(err)
+				}
+				Todo.findById(sampleId).then(todo => {
+					expect(todo).toNotExist()
+					done()
+				}).catch(err => done(err))
+			})
+	})
+
+	it("should return a 404 if invalid id", (done) => {
+		request(app)
+			.delete("/todos/123abc")
+			.expect(404)
+			.end(done)
+	})
+
+	it("should return 404 if unable to find todo", (done) => {
+		let badId = "6c6332c4be32af8b6d836528"
+
+		request(app)
+			.delete(`/todos/${badId}`)
 			.expect(404)
 			.end(done)
 	})
