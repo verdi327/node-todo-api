@@ -8,6 +8,16 @@ let {Todo} = require("./models/todo")
 
 app.use(bodyParser.json())
 
+// list all todos
+app.get("/todos", (req, res) => {
+	Todo.find().then(todos => {
+		res.send({todos})
+	}, e => {
+		res.status(400).send(e)
+	})
+})
+
+// create todo
 app.post("/todos", (req, res) => {
 	let todo = new Todo({
 		text: req.body.text
