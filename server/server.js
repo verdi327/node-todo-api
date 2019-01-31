@@ -2,6 +2,7 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
 const port = process.env.PORT || 3000
+const _ = require("lodash")
 
 let {mongoose} = require("./db")
 let {ObjectID} = require("mongodb")
@@ -32,7 +33,7 @@ app.post("/todos", (req, res) => {
 	})
 })
 
-// find a specific todo
+// find a todo
 app.get("/todos/:id", (req, res) => {
 	let id = req.params.id
 
@@ -51,7 +52,7 @@ app.get("/todos/:id", (req, res) => {
 
 })
 
-// remove a specific todo
+// remove a todo
 app.delete("/todos/:id", (req, res) => {
 	let id = req.params.id
 
@@ -68,6 +69,36 @@ app.delete("/todos/:id", (req, res) => {
 	}).catch(e => {
 		res.status(400).send()
 	})
+})
+
+// edit a todo
+app.patch("/todos/:id", (req, res) => {
+	let id = req.params.id
+	// picks props if they exist to add to a new obj
+	let body = _.pick(req.body, ["text", "completed"])
+	
+	if (!ObjectID.isValid(id)){
+		return res.status(404).send()
+	}
+
+	if (_.isBoolean(body.completed) && body.completed){
+		body.completedAt = new Date().getTime()
+	} else {
+		body.completed = false
+		body.completedAt = null
+	}
+
+	Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then(todo => {
+		if (!todo){
+			return res.status(404).send()
+		}
+		res.send({todo})
+	}).catch(e => {
+		res.status(400).send()
+	})
+
+
+
 })
 
 

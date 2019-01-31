@@ -6,7 +6,7 @@ const {ObjectID} = require("mongodb")
 
 const sampleTodos = [
 	{_id: new ObjectID(), text: "first todo"},
-	{_id: new ObjectID(), text: "second todo"}
+	{_id: new ObjectID(), text: "second todo", completed: true, completedAt: 555}
 ]
 
 beforeEach(done => {
@@ -133,6 +133,49 @@ describe("DELETE /todos/:id", () => {
 			.delete(`/todos/${badId}`)
 			.expect(404)
 			.end(done)
+	})
+})
+
+describe("PATCH /todos/:id", ()=> {
+	it("should update a todo", (done) => {
+		let sampleId = sampleTodos[0]._id.toHexString()
+		let text = "an updated todo"
+		request(app)
+			.patch(`/todos/${sampleId}`)
+			.send({text})
+			.expect(200)
+			.expect(res => {
+				expect(res.body.todo.text).toBe(text)
+			})
+			.end((err, res) => {
+				if (err) {
+					return done(err)
+				}
+				Todo.findById(sampleId).then(todo => {
+					expect(todo.text).toBe(text)
+					done()
+				}).catch(e => done(e))
+			})
+	})
+	
+	it("should clear completeAt when do is marked not completed", (done) => {
+		let sampleId = sampleTodos[1]._id.toHexString()
+		request(app)
+			.patch(`/todos/${sampleId}`)
+			.send({complete: false})
+			.expect(200)
+			.expect(res => {
+				expect(res.body.todo).toInclude({completed: false, completedAt: null})
+			})
+			.end((err, res) => {
+				if (err) {
+					return done(err)
+				}
+				Todo.findById(sampleId).then(todo => {
+					expect(todo).toInclude({completed: false, completedAt: null})
+					done()
+				}).catch(e => done(e))
+			})
 	})
 })
 
