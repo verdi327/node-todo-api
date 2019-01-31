@@ -1,6 +1,7 @@
 const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
+const port = process.env.PORT || 3000
 
 let {mongoose} = require("./db")
 let {ObjectID} = require("mongodb")
@@ -51,8 +52,8 @@ app.get("/todos/:id", (req, res) => {
 })
 
 
-app.listen(3000, () => {
-	console.log("server is online")
+app.listen(port, () => {
+	console.log(`server is online at port ${port}`)
 })
 
 module.exports = {app}

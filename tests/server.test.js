@@ -84,9 +84,17 @@ describe("GET /todos/:id", () => {
 		})
 	})
 
-	it("should return 404 if unable to find todo", (done) => {
+	it("should return 404 if invalid id is sent", (done) => {
 		request(app)
 			.get("/todos/1234")
+			.expect(404)
+			.end(done)
+	})
+
+	it("should return 404 if unable to find a todo", (done) => {
+		let badId = "6c6332c4be32af8b6d836528"
+		request(app)
+			.get(`/todos/${badId}`)
 			.expect(404)
 			.end(done)
 	})
