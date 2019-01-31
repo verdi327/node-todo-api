@@ -3,6 +3,7 @@ const bodyParser = require("body-parser")
 const app = express()
 
 let {mongoose} = require("./db")
+let {ObjectID} = require("mongodb")
 let {User} = require("./models/user")
 let {Todo} = require("./models/todo")
 
@@ -30,10 +31,28 @@ app.post("/todos", (req, res) => {
 	})
 })
 
+// find a specific todo
+app.get("/todos/:id", (req, res) => {
+	let id = req.params.id
+
+	if (!ObjectID.isValid(id)){
+		return res.status(404).send()
+	}
+
+	Todo.findById(id).then(todo => {
+		if (!todo) {
+			return res.status(404).send()
+		}
+		res.send({todo})
+	}).catch(e => {
+		res.status(400).send()
+	})
+
+})
+
 
 app.listen(3000, () => {
 	console.log("server is online")
 })
 
 module.exports = {app}
-

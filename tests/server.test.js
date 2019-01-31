@@ -71,5 +71,26 @@ describe("GET /todos", () => {
 	})
 })
 
+describe("GET /todos/:id", () => {
+	it("should return the correct todo with valid id", (done) => {
+		Todo.findOne().then(todo => {
+			request(app)
+				.get(`/todos/${todo.id}`)
+				.expect(200)
+				.expect(res => {
+					expect(res.body.todo).toInclude(todo._doc)
+				})
+				.end(done)
+		})
+	})
+
+	it("should return 404 if unable to find todo", (done) => {
+		request(app)
+			.get("/todos/1234")
+			.expect(404)
+			.end(done)
+	})
+})
+
 
 
