@@ -2,18 +2,12 @@ const expect = require("expect")
 const request = require("supertest")
 const {app} = require("./../server/server")
 const {Todo} = require("./../server/models/todo")
+const {User} = require("./../server/models/user")
 const {ObjectID} = require("mongodb")
+const {sampleTodos, populateTodos, users, populateUsers} = require("./seed")
 
-const sampleTodos = [
-	{_id: new ObjectID(), text: "first todo"},
-	{_id: new ObjectID(), text: "second todo", completed: true, completedAt: 555}
-]
-
-beforeEach(done => {
-	Todo.remove({}).then(() => {
-		return Todo.insertMany(sampleTodos)
-	}).then(() => done())
-})
+beforeEach(populateUsers)
+beforeEach(populateTodos)
 
 describe("POST /todos", () => {
 	it ("should create a new todo", (done) => {
@@ -179,5 +173,74 @@ describe("PATCH /todos/:id", ()=> {
 	})
 })
 
+describe("GET /users/me", () => {
+	it("should return user if authenticated", (done) => {
+		let user = users[0]
+		request(app)
+			.get("/users/me")
+			.set("x-auth", user.tokens[0].token)
+			.expect(200)
+			.expect(res => {
+				expect(res.body._id).toBe(user._id.toHexString())
+				expect(res.body.email).toBe(user.email)
+			})
+			.end(done)
+	})
+
+	it("should return a 401 if NOT authenticated", (done) => {
+		request(app)
+			.get("/users/me")
+			.expect(401)
+			.end(done)
+	})
+})
+
+describe("POST /users", () => {
+	it("should create a user", done => {
+		let user = {email: "foo@bar.com", password: "abc123"}
+		request(app)
+			.post("/users")
+			.send(user)
+			.expect(200)
+			.expect(res => {
+				expect(res.body.email).toBe(user.email)
+				expect(res.body._id).toExist()
+				expect(res.header["x-auth"]).toExist()
+			})
+			.end((err, res) => {
+				if (err){
+					return done(err)
+				}
+				User.findOne({email: user.email}).then(userDoc => {
+					expect(userDoc).toExist()
+					expect(userDoc.password).toNotBe(user.password)
+					done()
+				}).catch(e => done(e))
+			})
+	})
+
+	it("should return validation error if request invalid", done => {
+		let user = {email: "foo@bar.com", password: "abc"}
+		request(app)
+			.post("/users")
+			.send(user)
+			.expect(400)
+			.expect(res => {
+				expect(res.body).toInclude({"name": "ValidationError"})
+			})
+			.end(done)
+	})
+
+	it("should return validation error if email already exists", done => {
+		request(app)
+			.post("/users")
+			.send(users[0])
+			.expect(400)
+			.expect(res => {
+				expect(res.body).toInclude({code: 11000})
+			})
+			.end(done)
+	})
+})
 
 
