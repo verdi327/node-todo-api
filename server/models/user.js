@@ -40,6 +40,7 @@ UserSchema.methods.toJSON = function () {
 	return _.pick(userObj, ["_id", "email"])
 }
 
+// .methods adds instance methods to a user
 UserSchema.methods.generateAuthToken = function () {
 	let user = this;
 	let access = "auth"
@@ -51,6 +52,26 @@ UserSchema.methods.generateAuthToken = function () {
 		return token
 	}, (e) => {return e})
 }
+
+// .statics adds class methods to User
+UserSchema.statics.findByToken = function (token) {
+  var User = this;
+  var decoded;
+
+  try {
+    decoded = jwt.verify(token, 'abc123');
+  } catch (e) {
+    return Promise.reject();
+  }
+
+  console.log(decoded)
+
+  return User.findOne({
+    '_id': decoded.id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
+  });
+};
 
 const User = mongoose.model("User", UserSchema)
 

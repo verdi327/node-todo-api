@@ -9,6 +9,7 @@ let {mongoose} = require("./db")
 let {ObjectID} = require("mongodb")
 let {User} = require("./models/user")
 let {Todo} = require("./models/todo")
+const {authenticate} = require('./middleware/authenticate');
 
 app.use(bodyParser.json())
 
@@ -111,9 +112,12 @@ app.post("/users", (req, res) => {
 	}).catch(e => {
 		res.status(400).send(e)
 	})
-
-
 })
+
+// return the currently logged in user
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
+});
 
 
 app.listen(port, () => {
