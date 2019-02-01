@@ -97,7 +97,20 @@ app.patch("/todos/:id", (req, res) => {
 	}).catch(e => {
 		res.status(400).send()
 	})
+})
 
+// create a new user
+app.post("/users", (req, res) => {
+	let body = _.pick(req.body, ["email", "password"])
+	let newUser = new User(body)
+
+	newUser.save().then(user => {
+		return user.generateAuthToken()
+	}).then(token => {
+		res.header("x-auth", token).send(newUser)
+	}).catch(e => {
+		res.status(400).send(e)
+	})
 
 
 })
