@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const bcrypt = require("bcryptjs");
 
 const UserSchema = new mongoose.Schema({
 	email: {
@@ -64,14 +65,30 @@ UserSchema.statics.findByToken = function (token) {
     return Promise.reject();
   }
 
-  console.log(decoded)
-
   return User.findOne({
     '_id': decoded.id,
     'tokens.token': token,
     'tokens.access': 'auth'
   });
 };
+
+// mongoose middleware that allows us to attach a method before saving a user
+// like rails before_save hook, unfortunately there is no before_create
+// so we must use the isModified method which checks to see if the user
+// changed the password at all, which is when we'd re-hash
+UserSchema.pre("save", function(next) {
+	let user = this;
+	if (user.isModified("password")) {
+		bcrypt.genSalt(10, (err, salt) => {
+	    bcrypt.hash(user.password, salt, (err, hash) => {
+	    	user.password = hash;
+	    	next();
+	    });
+		});
+	} else {
+		next();
+	}
+})
 
 const User = mongoose.model("User", UserSchema)
 
