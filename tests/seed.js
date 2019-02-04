@@ -16,13 +16,13 @@ const users = [
 	_id: userOneId,
 	email: "john@gmail.com",
 	password: "abc123",
-	tokens: [{access: "auth", token: jwt.sign({id: userOneId.toHexString(), access: "auth"}, "abc123")}]
+	tokens: [{access: "auth", token: jwt.sign({id: userOneId.toHexString(), access: "auth"}, process.env.JWT_SECRET)}]
 },
 {
 	_id: userTwoId,
 	email: "brad@gmail.com",
 	password: "abc123",
-	tokens: [{access: "auth", token: jwt.sign({id: userTwoId.toHexString(), access: "auth"}, "abc123")}]
+	tokens: [{access: "auth", token: jwt.sign({id: userTwoId.toHexString(), access: "auth"}, process.env.JWT_SECRET)}]
 }]
 
 var populateTodos = done => {
