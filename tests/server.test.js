@@ -41,7 +41,7 @@ describe("POST /todos", () => {
 			.send({})
 			.expect(400)
 			.expect(res => {
-				expect(res.body).toInclude({"message": "Todo validation failed"})
+				expect(res.body).toMatchObject({"message": "Todo validation failed"})
 			})
 			.end((err, res) => {
 				if (err) {
@@ -76,7 +76,7 @@ describe("GET /todos/:id", () => {
 			.set("x-auth", users[0].tokens[0].token)
 			.expect(200)
 			.expect(res => {
-				expect(res.body.todo).toInclude(sampleTodos[0])
+				expect(res.body.todo).toMatchObject({text: sampleTodos[0].text})
 			})
 			.end(done)
 	})
@@ -115,14 +115,14 @@ describe("DELETE /todos/:id", () => {
 			.set("x-auth", users[0].tokens[0].token)
 			.expect(200)
 			.expect(res => {
-				expect(res.body.todo).toInclude(sampleTodos[0])
+				expect(res.body.todo).toMatchObject({text: sampleTodos[0].text})
 			})
 			.end((err, res) => {
 				if (err) {
 					return done(err)
 				}
 				Todo.findById(sampleId).then(todo => {
-					expect(todo).toNotExist()
+					expect(todo).toBeFalsy()
 					done()
 				}).catch(err => done(err))
 			})
@@ -199,7 +199,7 @@ describe("PATCH /todos/:id", ()=> {
 			.send({complete: false})
 			.expect(200)
 			.expect(res => {
-				expect(res.body.todo).toInclude({completed: false, completedAt: null})
+				expect(res.body.todo).toMatchObject({completed: false, completedAt: null})
 			})
 			.end((err, res) => {
 				if (err) {
@@ -207,7 +207,7 @@ describe("PATCH /todos/:id", ()=> {
 				}
 				Todo.findOne({_id: sampleId, _creator: users[1]._id}).then(todo => {
 					todo = todo.toObject();
-					expect(todo).toInclude({completed: false, completedAt: null})
+					expect(todo).toMatchObject({completed: false, completedAt: null})
 					done()
 				}).catch(e => done(e))
 			})
@@ -245,16 +245,16 @@ describe("POST /users", () => {
 			.expect(200)
 			.expect(res => {
 				expect(res.body.email).toBe(user.email)
-				expect(res.body._id).toExist()
-				expect(res.header["x-auth"]).toExist()
+				expect(res.body._id).toBeTruthy()
+				expect(res.header["x-auth"]).toBeTruthy()
 			})
 			.end((err, res) => {
 				if (err){
 					return done(err)
 				}
 				User.findOne({email: user.email}).then(userDoc => {
-					expect(userDoc).toExist()
-					expect(userDoc.password).toNotBe(user.password)
+					expect(userDoc).toBeTruthy()
+					expect(userDoc.password).not.toBe(user.password)
 					done()
 				}).catch(e => done(e))
 			})
@@ -267,7 +267,7 @@ describe("POST /users", () => {
 			.send(user)
 			.expect(400)
 			.expect(res => {
-				expect(res.body).toInclude({"name": "ValidationError"})
+				expect(res.body).toMatchObject({"name": "ValidationError"})
 			})
 			.end(done)
 	})
@@ -278,7 +278,7 @@ describe("POST /users", () => {
 			.send(users[0])
 			.expect(400)
 			.expect(res => {
-				expect(res.body).toInclude({code: 11000})
+				expect(res.body).toMatchObject({code: 11000})
 			})
 			.end(done)
 	})
@@ -291,7 +291,7 @@ describe("POST /users/login", () => {
 			.send({email: users[1].email, password: users[1].password})
 			.expect(200)
 			.expect(res => {
-				expect(res.headers["x-auth"]).toExist()
+				expect(res.headers["x-auth"]).toBeTruthy()
 			})
 			.end((err, res) => {
 				if (err) {
@@ -301,7 +301,7 @@ describe("POST /users/login", () => {
 				User.findById(users[1]._id).then(user => {
 					user = user.toObject();
 					
-					expect(user.tokens[1]).toInclude({
+					expect(user.tokens[1]).toMatchObject({
 						access: "auth",
 						token: res.headers["x-auth"]
 					})
@@ -316,7 +316,7 @@ describe("POST /users/login", () => {
 			.send({email: users[1].email, password: users[1].password + "xx"})
 			.expect(400)
 			.expect(res => {
-				expect(res.headers["x-auth"]).toNotExist()
+				expect(res.headers["x-auth"]).toBeFalsy()
 			})
 			.end((err, res) => {
 				if (err) {
